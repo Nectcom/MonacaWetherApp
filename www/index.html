@@ -1,0 +1,107 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="Content-Security-Policy" content="default-src * data: gap: https://ssl.gstatic.com; style-src * 'unsafe-inline'; script-src * 'unsafe-inline' 'unsafe-eval'">
+  <script src="components/loader.js"></script>
+  <script src="lib/onsenui/js/onsenui.min.js"></script>
+
+  <link rel="stylesheet" href="components/loader.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsenui.css">
+  <link rel="stylesheet" href="lib/onsenui/css/onsen-css-components.css">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script>
+    // API Key
+    const key = "c45a6ccf1de09c46774660919ac76c65";
+    const url = "https://api.darksky.net/forecast/";
+    let geo = [34.73, 135.50];　//新大阪駅
+    
+    function formatDate(unixtime){
+      let date = new Date(unixtime * 1000);
+      let year = date.getFullYear();
+      let month = date.getMonth() + 1;
+      let day = date.getDate();
+      let hour = ('0' + date.getHours()).slice(-2);
+      let min = ('0' + date.getMinutes()).slice(-2);
+      let sec = ('0' + date.getSeconds()).slice(-2);
+      
+      return(year + "-" + month + "-" + day + " " + hour + ":" + min + ":" + sec);
+    };
+      
+    // Page init event
+    document.addEventListener('init', function(event) {
+      var page = event.target;
+
+      if (page.matches('#first-page')) {
+
+        page.querySelector('#push-button').onclick = function() {
+          $.ajax({
+            type : "GET",
+            url : "https://api.darksky.net/forecast/c45a6ccf1de09c46774660919ac76c65/34.73,135.50?extend=hourly&units=si",
+            data : {},
+            cache : true,
+            dataType : "json",
+            success : function(responce){
+              console.log("success");
+              let label = [];
+              let temperature = [];
+              // console.log(JSON.stringify(responce));
+              for(let d of responce.hourly.data){
+                console.log(formatDate(d.time) + "  " + d.temperature);
+                label.push(formatDate(d.time));
+                temperature.push(d.temperature);
+              }
+              
+              // set Data to Chart.js
+              let data = {
+                labels : label,
+                datasets : [
+                  {
+                    label : "Sin Osaka Sta.",
+                    data : temperature
+                  }
+                ]
+              };
+              
+              let ctx = document.getElementById("testChart").getContext("2d");
+              let lineChart = new Chart(ctx, {
+                type : "line",
+                data : data,
+                options : {}
+                });
+              
+            },
+            error : function(responce, textStatus, errorThrown){
+              console.log("error");
+              console.log(textStatus);
+              console.log(errorThrown);
+              console.log(JSON.stringify(responce));
+            }
+          });
+        };
+
+      };
+    });
+  </script>
+</head>
+<body>
+  <ons-navigator id="navigator" page="page1.html"></ons-navigator>
+
+  <ons-template id="page1.html">
+    <ons-page id="first-page">
+      <ons-toolbar>
+        <div class="center">Page 1</div>
+      </ons-toolbar>
+
+      <div class="content" style="text-align: center">
+        <p>This is the first page.</p>
+        <ons-button id="push-button">Get Data</ons-button>
+        <canvas id="testChart", style="width:100%"></canvas>
+      </div>
+    </ons-page>
+  </ons-template>
+
+</body>
+</html>
